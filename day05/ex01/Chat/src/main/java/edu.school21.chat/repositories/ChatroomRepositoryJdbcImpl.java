@@ -1,0 +1,35 @@
+package edu.school21.chat.repositories;
+
+import edu.school21.chat.models.Chatroom;
+
+import java.sql.*;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Optional;
+
+public class ChatroomRepositoryJdbcImpl{
+
+    private final Connection connection;
+    private final String COMAND = "SELECT * FROM chat.room WHERE id=?";
+
+    public ChatroomRepositoryJdbcImpl(Connection dataSource) {
+        this.connection = dataSource;
+    }
+
+    public Optional<Chatroom> findById(Long id) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(COMAND);
+        statement.setLong(1, id);
+        UserRepositoryJdbcImpl user = new UserRepositoryJdbcImpl(connection);
+        ResultSet reulst = statement.executeQuery();
+        Chatroom chatroom = null;
+        if(reulst.next()) {
+            chatroom = new Chatroom(reulst.getLong("id"),
+                    reulst.getString("name"),
+                    user.findById(reulst.getLong("owner")).orElse(null),
+                    new ArrayList<>());
+        }
+        reulst.close();
+        statement.close();
+        return Optional.ofNullable(chatroom);
+    }
+}
